@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1058190242127",
+    "project_id": "fixitnow-d362a",
+    "storage_bucket": "fixitnow-d362a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1058190242127:android:76ecf04ad90fd5f723953a",
+        "android_client_info": {
+          "package_name": "com.example.fixitnow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2qV8K6gtunFVHpaWvYivfr4T5KTjPwHA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
