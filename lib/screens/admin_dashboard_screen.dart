@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'assign_complaint_screen.dart'; // ✅ Add this if the screen exists
+import 'assign_complaint_screen.dart';
+import 'manage_teams_screen.dart';
+import 'admin_cr_list_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -21,22 +23,34 @@ class AdminDashboardScreen extends StatelessWidget {
             _AdminTile(
               label: 'Assign Complaints',
               icon: Icons.assignment,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AssignComplaintScreen(),
-                  ),
-                );
-              },
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AssignComplaintScreen(),
+                ),
+              ),
             ),
             _AdminTile(
               label: 'Manage Users/Teams',
               icon: Icons.group,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ManageTeamsScreen()),
+              ),
+            ),
+            _AdminTile(
+              label: 'CR List',
+              icon: Icons.list,
               onTap: () {
-                // TODO: Add navigation
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AdminCRListScreen(),
+                  ),
+                );
               },
             ),
+
             _AdminTile(
               label: 'Logout',
               icon: Icons.logout,

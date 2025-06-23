@@ -12,7 +12,7 @@ class FeedScreen extends StatelessWidget {
       ),
       body: const Center(
         child: Text(
-          "News Feed / Announcement area coming soon...",
+          "Announcement area coming soon.",
           style: TextStyle(fontSize: 18, color: Colors.white),
         ),
       ),

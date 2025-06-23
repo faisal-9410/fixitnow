@@ -25,35 +25,7 @@ class DashboardScreen extends StatelessWidget {
                 style: TextStyle(color: Colors.white, fontSize: 20),
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.dashboard),
-              title: const Text('Dashboard'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.report),
-              title: const Text('My Complaints'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MyComplaintsScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.done_all),
-              title: const Text('Solved Complaints'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SolvedComplaintScreen(),
-                  ),
-                );
-              },
-            ),
+
             ListTile(
               leading: const Icon(Icons.contact_support),
               title: const Text('Contact Us'),
@@ -85,7 +57,7 @@ class DashboardScreen extends StatelessWidget {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => LoginScreen()),
-                      (route) => false,
+                  (route) => false,
                 );
               },
             ),

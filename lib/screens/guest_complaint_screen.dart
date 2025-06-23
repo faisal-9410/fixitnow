@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
-class FileComplaintScreen extends StatefulWidget {
-  const FileComplaintScreen({super.key});
+class GuestComplaintScreen extends StatefulWidget {
+  const GuestComplaintScreen({super.key});
 
   @override
-  State<FileComplaintScreen> createState() => _FileComplaintScreenState();
+  State<GuestComplaintScreen> createState() => _GuestComplaintScreenState();
 }
 
-class _FileComplaintScreenState extends State<FileComplaintScreen> {
+class _GuestComplaintScreenState extends State<GuestComplaintScreen> {
   int complaintCounter = 1;
-  final TextEditingController titleController = TextEditingController();
-  final TextEditingController roomController = TextEditingController();
+  final TextEditingController guestNameController = TextEditingController();
   final TextEditingController crRollController = TextEditingController();
-  final TextEditingController designationController = TextEditingController();
+  final TextEditingController complaintTitleController =
+      TextEditingController();
+  final TextEditingController roomLocationController = TextEditingController();
 
   String generateComplaintID() {
     return "C${complaintCounter.toString().padLeft(4, '0')}";
@@ -22,7 +23,7 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("File Complaint"),
+        title: const Text("Guest Complaint Form"),
         backgroundColor: Colors.pink[700],
       ),
       body: Padding(
@@ -34,15 +35,15 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            _buildTextField(titleController, "Complaint Title"),
-            _buildTextField(roomController, "Room/Location"),
-            _buildTextField(crRollController, "CR Roll Number"),
-            _buildTextField(designationController, "Designation"),
+            _buildTextField(guestNameController, "Your Name (Guest)"),
+            _buildTextField(crRollController, "Absent CR's Roll Number"),
+            _buildTextField(complaintTitleController, "Complaint Title"),
+            _buildTextField(roomLocationController, "Room/Location"),
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
               onPressed: () {
-                // Save complaint with auto ID
+                // Submit as guest complaint
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text("Submitted ${generateComplaintID()}")),
                 );

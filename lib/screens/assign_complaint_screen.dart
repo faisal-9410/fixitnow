@@ -42,26 +42,26 @@ class AssignComplaintScreen extends StatelessWidget {
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 8),
             child: ListTile(
-              title: Text(
-                "${complaint['title']} (${complaint['location']})",
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+              title: Text("${complaint['title']} (${complaint['location']})"),
               subtitle: Text("ID: ${complaint['id']} - Status: ${complaint['status']}"),
               trailing: DropdownButton<String>(
+                dropdownColor: Colors.white,
+                iconEnabledColor: Colors.black,
                 hint: const Text("Assign"),
-                value: null, // Default dropdown value
-                onChanged: (selectedTeam) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Assigned '${complaint['id']}' to $selectedTeam")),
-                  );
-                  // TODO: Save assignment to Firebase or database in future
-                },
                 items: teams.map((String team) {
                   return DropdownMenuItem<String>(
                     value: team,
-                    child: Text(team),
+                    child: Text(
+                      team,
+                      style: const TextStyle(color: Colors.black),
+                    ),
                   );
                 }).toList(),
+                onChanged: (value) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Assigned to $value")),
+                  );
+                },
               ),
             ),
           );

@@ -39,20 +39,53 @@ class ManageTeamsScreen extends StatelessWidget {
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 8),
             child: ListTile(
-              title: Text(
-                team['name'],
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+              title: Text(team['name']),
               subtitle: Text(
-                "Total: ${team['total']} | Pending: ${team['pending']} | Completed: ${team['completed']}",
+                "Total: ${team['total']}, Pending: ${team['pending']}, Completed: ${team['completed']}",
               ),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
-                // You can navigate to a detailed team screen in future
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Showing details for ${team['name']}")),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TeamDetailsScreen(teamName: team['name']),
+                  ),
                 );
               },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class TeamDetailsScreen extends StatelessWidget {
+  final String teamName;
+
+  const TeamDetailsScreen({super.key, required this.teamName});
+
+  @override
+  Widget build(BuildContext context) {
+    final dummyComplaints = [
+      "Complaint A resolved",
+      "Complaint B pending",
+      "Complaint C resolved"
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('$teamName - Complaints'),
+        backgroundColor: Colors.pink[700],
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: dummyComplaints.length,
+        itemBuilder: (context, index) {
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: ListTile(
+              title: Text(dummyComplaints[index]),
             ),
           );
         },
