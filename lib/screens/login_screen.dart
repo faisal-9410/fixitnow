@@ -4,7 +4,7 @@ import 'register_screen.dart';
 import 'dashboard_screen.dart';
 import 'admin_dashboard_screen.dart';
 import 'guest_complaint_screen.dart';
-import 'cr_register_screen.dart';
+import 'team_dashboard_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController _emailController = TextEditingController();
@@ -67,6 +67,61 @@ class LoginScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const GuestComplaintScreen(),
+                          ),
+                        );
+                      } else if (email == 'electric' &&
+                          password == 'electric') {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const TeamDashboardScreen(teamName: "Electric"),
+                          ),
+                        );
+                      } else if (email == 'water' && password == 'water') {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const TeamDashboardScreen(teamName: "Water"),
+                          ),
+                        );
+                      } else if (email == 'furniture' &&
+                          password == 'furniture') {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const TeamDashboardScreen(
+                              teamName: "Furniture",
+                            ),
+                          ),
+                        );
+                      } else if (email == 'computer' &&
+                          password == 'computer') {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const TeamDashboardScreen(teamName: "Computer"),
+                          ),
+                        );
+                      } else if (email == 'projector' &&
+                          password == 'projector') {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const TeamDashboardScreen(
+                              teamName: "Projector",
+                            ),
+                          ),
+                        );
+                      } else if (email == 'building' &&
+                          password == 'building') {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const TeamDashboardScreen(teamName: "Building"),
                           ),
                         );
                       } else {

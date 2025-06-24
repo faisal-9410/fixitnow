@@ -14,6 +14,8 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
   final TextEditingController crRollController = TextEditingController();
   final TextEditingController designationController = TextEditingController();
 
+  bool isPriority = false; // ✅ New field for emergency flag
+
   String generateComplaintID() {
     return "C${complaintCounter.toString().padLeft(4, '0')}";
   }
@@ -38,16 +40,48 @@ class _FileComplaintScreenState extends State<FileComplaintScreen> {
             _buildTextField(roomController, "Room/Location"),
             _buildTextField(crRollController, "CR Roll Number"),
             _buildTextField(designationController, "Designation"),
+
+            // ✅ Priority Toggle
+            CheckboxListTile(
+              title: const Text("Mark as Emergency (High Priority)"),
+              value: isPriority,
+              onChanged: (value) {
+                setState(() {
+                  isPriority = value!;
+                });
+              },
+            ),
+
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
               onPressed: () {
-                // Save complaint with auto ID
+                // Normally: store this complaint into database or list
+                String id = generateComplaintID();
+                String title = titleController.text;
+                String room = roomController.text;
+                String roll = crRollController.text;
+                String designation = designationController.text;
+
+                // For now, just simulate storing
+                print("Submitted complaint $id:");
+                print("  Title: $title");
+                print("  Room: $room");
+                print("  CR Roll: $roll");
+                print("  Designation: $designation");
+                print("  Priority: $isPriority");
+
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Submitted ${generateComplaintID()}")),
+                  SnackBar(content: Text("Submitted $id (Priority: $isPriority)")),
                 );
+
                 setState(() {
                   complaintCounter++;
+                  titleController.clear();
+                  roomController.clear();
+                  crRollController.clear();
+                  designationController.clear();
+                  isPriority = false;
                 });
               },
               child: const Text("Submit"),

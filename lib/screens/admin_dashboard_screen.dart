@@ -50,12 +50,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 );
               },
             ),
-
-            _AdminTile(
-              label: 'Logout',
-              icon: Icons.logout,
-              onTap: () => Navigator.pop(context),
-            ),
+            
           ],
         ),
       ),

@@ -68,9 +68,9 @@ class TeamDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dummyComplaints = [
-      "Complaint A resolved",
-      "Complaint B pending",
-      "Complaint C resolved"
+      "Complaint C012 resolved",
+      "Complaint C013 pending",
+      "Complaint C014 resolved"
     ];
 
     return Scaffold(
