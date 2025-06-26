@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class FileComplaintScreen extends StatefulWidget {
@@ -8,98 +10,115 @@ class FileComplaintScreen extends StatefulWidget {
 }
 
 class _FileComplaintScreenState extends State<FileComplaintScreen> {
-  int complaintCounter = 1;
-  final TextEditingController titleController = TextEditingController();
-  final TextEditingController roomController = TextEditingController();
-  final TextEditingController crRollController = TextEditingController();
-  final TextEditingController designationController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _roomController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
 
-  bool isPriority = false; // ✅ New field for emergency flag
+  bool _isSubmitting = false;
+  String? _error;
 
-  String generateComplaintID() {
-    return "C${complaintCounter.toString().padLeft(4, '0')}";
+  Future<void> _submitComplaint() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isSubmitting = true;
+      _error = null;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        setState(() => _error = 'User not logged in');
+        return;
+      }
+
+      final complaintId = 'C${DateTime.now().millisecondsSinceEpoch}';
+
+      await FirebaseFirestore.instance.collection('complaints').add({
+        'title': _titleController.text.trim(),
+        'room': _roomController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'status': 'Pending',
+        'crId': user.uid,
+        'timestamp': FieldValue.serverTimestamp(),
+        'complaintId': complaintId,
+        'userType': 'cr',
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Complaint submitted!')));
+
+      _titleController.clear();
+      _roomController.clear();
+      _descriptionController.clear();
+    } catch (e) {
+      setState(() => _error = 'Error: $e');
+    } finally {
+      setState(() => _isSubmitting = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("File Complaint"),
+        title: const Text('File Complaint'),
         backgroundColor: Colors.pink[700],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: ListView(
-          children: [
-            Text(
-              "Complaint ID: ${generateComplaintID()}",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            _buildTextField(titleController, "Complaint Title"),
-            _buildTextField(roomController, "Room/Location"),
-            _buildTextField(crRollController, "CR Roll Number"),
-            _buildTextField(designationController, "Designation"),
-
-            // ✅ Priority Toggle
-            CheckboxListTile(
-              title: const Text("Mark as Emergency (High Priority)"),
-              value: isPriority,
-              onChanged: (value) {
-                setState(() {
-                  isPriority = value!;
-                });
-              },
-            ),
-
-            const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
-              onPressed: () {
-                // Normally: store this complaint into database or list
-                String id = generateComplaintID();
-                String title = titleController.text;
-                String room = roomController.text;
-                String roll = crRollController.text;
-                String designation = designationController.text;
-
-                // For now, just simulate storing
-                print("Submitted complaint $id:");
-                print("  Title: $title");
-                print("  Room: $room");
-                print("  CR Roll: $roll");
-                print("  Designation: $designation");
-                print("  Priority: $isPriority");
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Submitted $id (Priority: $isPriority)")),
-                );
-
-                setState(() {
-                  complaintCounter++;
-                  titleController.clear();
-                  roomController.clear();
-                  crRollController.clear();
-                  designationController.clear();
-                  isPriority = false;
-                });
-              },
-              child: const Text("Submit"),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(),
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              if (_error != null)
+                Text(_error!, style: const TextStyle(color: Colors.red)),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Complaint Title',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _roomController,
+                decoration: const InputDecoration(
+                  labelText: 'Room No.',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 5,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _isSubmitting ? null : _submitComplaint,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pink[700],
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: _isSubmitting
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Submit Complaint'),
+              ),
+            ],
+          ),
         ),
       ),
     );

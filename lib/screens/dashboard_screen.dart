@@ -1,19 +1,33 @@
 import 'package:flutter/material.dart';
-import 'file_complaint_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'MyComplaintsScreen.dart';
+import 'file_complaint_screen.dart';
+import 'feed_screen.dart';
 import 'MyProfileScreen.dart';
 import 'login_screen.dart';
 import 'about_us.dart';
 import 'contact_us.dart';
-import 'solved_complaint.dart';
-import 'feed_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
+  void _signOut(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.pink[400],
+        title: const Text("Dashboard"),
+      ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -25,7 +39,6 @@ class DashboardScreen extends StatelessWidget {
                 style: TextStyle(color: Colors.white, fontSize: 20),
               ),
             ),
-
             ListTile(
               leading: const Icon(Icons.contact_support),
               title: const Text('Contact Us'),
@@ -53,20 +66,10 @@ class DashboardScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Sign Out'),
-              onTap: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                  (route) => false,
-                );
-              },
+              onTap: () => _signOut(context),
             ),
           ],
         ),
-      ),
-      appBar: AppBar(
-        backgroundColor: Colors.pink[400],
-        title: const Text("Dashboard"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

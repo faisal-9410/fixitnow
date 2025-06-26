@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class TeamDashboardScreen extends StatefulWidget {
@@ -13,45 +14,12 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   bool showAll = false;
   bool showPriority = false;
 
-  final List<Map<String, dynamic>> allComplaints = [
-    {
-      'id': 'C0001',
-      'title': 'Projector not working',
-      'room': '305',
-      'priority': true,
-      'assignedTeam': 'Projector'
-    },
-    {
-      'id': 'C0002',
-      'title': 'Fan making noise',
-      'room': '204',
-      'priority': false,
-      'assignedTeam': 'Electric'
-    },
-    {
-      'id': 'C0003',
-      'title': 'Water leakage',
-      'room': 'Lab 2',
-      'priority': true,
-      'assignedTeam': 'Water'
-    },
-    {
-      'id': 'C0004',
-      'title': 'Computer not booting',
-      'room': '203',
-      'priority': false,
-      'assignedTeam': 'Computer'
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final teamComplaints = allComplaints
-        .where((c) => c['assignedTeam'] == widget.teamName)
-        .toList();
-
-    final priorityComplaints =
-    teamComplaints.where((c) => c['priority'] == true).toList();
+    final complaintsStream = FirebaseFirestore.instance
+        .collection('complaints')
+        .where('assignedTeam', isEqualTo: widget.teamName)
+        .snapshots();
 
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -79,74 +47,89 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 20,
-              mainAxisSpacing: 20,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _buildBox(
-                  title: 'All Complaints',
-                  count: teamComplaints.length,
-                  icon: Icons.list_alt,
-                  color: const Color(0xFF6C63FF),
-                  onTap: () => setState(() {
-                    showAll = !showAll;
-                    showPriority = false;
-                  }),
-                ),
-                _buildBox(
-                  title: 'Priority Complaints',
-                  count: priorityComplaints.length,
-                  icon: Icons.warning_amber_rounded,
-                  color: Colors.redAccent,
-                  onTap: () => setState(() {
-                    showPriority = !showPriority;
-                    showAll = false;
-                  }),
-                ),
-              ],
-            ),
-          ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: complaintsStream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          // Complaint List below
-          if (showAll || showPriority)
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(12),
-                itemCount: (showPriority ? priorityComplaints : teamComplaints)
-                    .length,
-                itemBuilder: (context, index) {
-                  final complaint = (showPriority
-                      ? priorityComplaints
-                      : teamComplaints)[index];
+          final teamComplaints = snapshot.data!.docs;
+          final priorityComplaints = teamComplaints
+              .where((doc) => doc['priority'] == true)
+              .toList();
 
-                  return Card(
-                    color: Colors.white10,
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    child: ListTile(
-                      title: Text(
-                        complaint['title'],
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                      subtitle: Text(
-                        "Room: ${complaint['room']} • ID: ${complaint['id']}",
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-                      trailing: complaint['priority']
-                          ? const Icon(Icons.priority_high, color: Colors.red)
-                          : null,
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 20,
+                  mainAxisSpacing: 20,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _buildBox(
+                      title: 'All Complaints',
+                      count: teamComplaints.length,
+                      icon: Icons.list_alt,
+                      color: const Color(0xFF6C63FF),
+                      onTap: () => setState(() {
+                        showAll = true;
+                        showPriority = false;
+                      }),
                     ),
-                  );
-                },
+                    _buildBox(
+                      title: 'Priority Complaints',
+                      count: priorityComplaints.length,
+                      icon: Icons.warning_amber_rounded,
+                      color: Colors.redAccent,
+                      onTap: () => setState(() {
+                        showPriority = true;
+                        showAll = false;
+                      }),
+                    ),
+                  ],
+                ),
               ),
-            ),
-        ],
+              if (showAll || showPriority)
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount:
+                        (showPriority ? priorityComplaints : teamComplaints)
+                            .length,
+                    itemBuilder: (context, index) {
+                      final doc = (showPriority
+                          ? priorityComplaints
+                          : teamComplaints)[index];
+                      return Card(
+                        color: Colors.white10,
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        child: ListTile(
+                          title: Text(
+                            doc['title'],
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          subtitle: Text(
+                            "Room: ${doc['room']} • ID: ${doc.id}",
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                          trailing: doc['priority']
+                              ? const Icon(
+                                  Icons.priority_high,
+                                  color: Colors.red,
+                                )
+                              : null,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -178,11 +161,15 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
             children: [
               Icon(icon, size: 48, color: Colors.white),
               const SizedBox(height: 10),
-              Text(title,
-                  style: const TextStyle(fontSize: 16, color: Colors.white)),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 16, color: Colors.white),
+              ),
               const SizedBox(height: 6),
-              Text('$count',
-                  style: const TextStyle(fontSize: 14, color: Colors.white70)),
+              Text(
+                '$count',
+                style: const TextStyle(fontSize: 14, color: Colors.white70),
+              ),
             ],
           ),
         ),

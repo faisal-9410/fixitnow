@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'assign_complaint_screen.dart';
 import 'manage_teams_screen.dart';
 import 'admin_cr_list_screen.dart';
+import 'login_screen.dart';
+import 'post_announcement_screen.dart'; // ⬅️ New import
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
+
+  void _signOut(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,6 +25,12 @@ class AdminDashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Admin Panel'),
         backgroundColor: Colors.pink[700],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => _signOut(context),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -50,7 +69,18 @@ class AdminDashboardScreen extends StatelessWidget {
                 );
               },
             ),
-            
+            _AdminTile(
+              label: 'Post Announcement',
+              icon: Icons.announcement,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PostAnnouncementScreen(),
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),

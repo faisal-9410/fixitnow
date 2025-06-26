@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'login_screen.dart'; // ✅ Make sure this is correctly imported
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -19,23 +22,69 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController mobileController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      // Dummy local print
-      print("CR Registered:");
-      print("Name: ${nameController.text}");
-      print("MIST Roll: ${mistRollController.text}");
-      print("Level: ${levelController.text}");
-      print("Section: ${sectionController.text}");
-      print("Department: ${deptController.text}");
-      print("Email: ${emailController.text}");
-      print("Mobile: ${mobileController.text}");
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    FirebaseAuth.instance.signOut(); // ✅ Force sign-out to avoid confusion
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _loading = true);
+
+    try {
+      // ✅ 1. Create Firebase Auth account
+      UserCredential userCred = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
+
+      String uid = userCred.user!.uid;
+
+      // ✅ 2. Save CR info to Firestore
+      await FirebaseFirestore.instance
+          .collection('cr_registrations')
+          .doc(uid)
+          .set({
+            'name': nameController.text.trim(),
+            'mist_roll': mistRollController.text.trim(),
+            'level': levelController.text.trim(),
+            'section': sectionController.text.trim(),
+            'department': deptController.text.trim(),
+            'email': emailController.text.trim(),
+            'mobile': mobileController.text.trim(),
+            'uid': uid,
+            'approved': false, // For admin approval
+            'timestamp': FieldValue.serverTimestamp(),
+          });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Registration successful (Dummy)")),
+        const SnackBar(
+          content: Text("Registration successful! Awaiting admin approval."),
+        ),
       );
 
-      Navigator.pop(context); // Go back to login
+      // ✅ 3. Show message then go to LoginScreen
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? "Registration failed")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("An unexpected error occurred.")),
+      );
+    } finally {
+      setState(() => _loading = false);
     }
   }
 
@@ -64,11 +113,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.pink,
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 32,
+                  ),
                 ),
-                onPressed: _submitForm,
-                child: const Text("Register"),
-              )
+                onPressed: _loading ? null : _submitForm,
+                child: _loading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("Register"),
+              ),
             ],
           ),
         ),
@@ -76,7 +130,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget buildField(String label, TextEditingController controller, {bool obscure = false}) {
+  Widget buildField(
+    String label,
+    TextEditingController controller, {
+    bool obscure = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextFormField(

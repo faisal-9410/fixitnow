@@ -1,27 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'screens/login_screen.dart';
-//import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'screens/login_screen.dart'; // Your working login screen path
 
 void main() async {
-  //WidgetsFlutterBinding.ensureInitialized();
-  //await Firebase.initializeApp(); // Make sure Firebase is initialized
-  runApp(FixItNowApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const MyApp());
 }
 
-class FixItNowApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FixItNow - MIST',
       debugShowCheckedModeBanner: false,
+      title: 'FixItNow',
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        textTheme: GoogleFonts.poppinsTextTheme(
-          Theme.of(context).textTheme,
-        ).apply(bodyColor: Colors.white, displayColor: Colors.white),
+        primarySwatch: Colors.pink,
+        useMaterial3: false, // ❌ This disables Material 3
       ),
-      home: LoginScreen(),
+      home: const LoginScreen(), // ✅ This loads your classic login UI
     );
   }
 }
