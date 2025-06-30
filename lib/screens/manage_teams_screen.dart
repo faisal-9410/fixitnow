@@ -1,79 +1,95 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'team_dashboard_screen.dart';
+
+import 'team_details_screen.dart';
 
 class ManageTeamsScreen extends StatelessWidget {
-  const ManageTeamsScreen({super.key});
-
-  Future<Map<String, Map<String, int>>> _fetchTeamStats() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('complaints')
-        .get();
-
-    Map<String, Map<String, int>> stats = {};
-
-    for (var doc in snapshot.docs) {
-      String team = doc['assignedTeam'] ?? 'Unknown';
-      String status = doc['status'] ?? 'pending';
-
-      stats.putIfAbsent(team, () => {"total": 0, "pending": 0, "completed": 0});
-      stats[team]!['total'] = stats[team]!['total']! + 1;
-
-      if (status == 'pending') {
-        stats[team]!['pending'] = stats[team]!['pending']! + 1;
-      } else if (status == 'completed') {
-        stats[team]!['completed'] = stats[team]!['completed']! + 1;
-      }
-    }
-
-    return stats;
-  }
+  final List<String> teamNames = [
+    'Electric Team',
+    'Water Team',
+    'Furniture Team',
+    'Projector Team',
+    'Computer Team',
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Manage Teams"),
-        backgroundColor: Colors.pink[700],
+        backgroundColor: Colors.pink,
       ),
-      body: FutureBuilder<Map<String, Map<String, int>>>(
-        future: _fetchTeamStats(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: teamNames.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.2,
+            ),
+            itemBuilder: (context, index) {
+              final team = teamNames[index];
+              return StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('complaints')
+                    .where('assignedTeam', isEqualTo: team)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  int total = 0;
+                  if (snapshot.hasData) {
+                    total = snapshot.data!.docs.length;
+                  }
 
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No data available."));
-          }
-
-          final stats = snapshot.data!;
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: stats.entries.map((entry) {
-              final name = entry.key;
-              final data = entry.value;
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: ListTile(
-                  title: Text(name),
-                  subtitle: Text(
-                    "Total: ${data['total']}, Pending: ${data['pending']}, Completed: ${data['completed']}",
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => TeamDashboardScreen(teamName: name),
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => TeamDetailsScreen(teamName: team),
+                        ),
+                      );
+                    },
+                    child: Card(
+                      color: Colors.pink[50],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    );
-                  },
-                ),
+                      elevation: 4,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '$team Team',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Total complaints: $total',
+                              style: const TextStyle(
+                                color: Colors.black54,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
               );
-            }).toList(),
-          );
-        },
+            },
+          ),
+        ),
       ),
     );
   }

@@ -4,8 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'assign_complaint_screen.dart';
 import 'manage_teams_screen.dart';
 import 'admin_cr_list_screen.dart';
+import 'announcement_home_screen.dart';
 import 'login_screen.dart';
-import 'post_announcement_screen.dart'; // ⬅️ New import
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -32,56 +32,65 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          children: [
-            _AdminTile(
-              label: 'Assign Complaints',
-              icon: Icons.assignment,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const AssignComplaintScreen(),
-                ),
-              ),
-            ),
-            _AdminTile(
-              label: 'Manage Users/Teams',
-              icon: Icons.group,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ManageTeamsScreen()),
-              ),
-            ),
-            _AdminTile(
-              label: 'CR List',
-              icon: Icons.list,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AdminCRListScreen(),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                children: [
+                  _AdminTile(
+                    label: 'Assign Complaints',
+                    icon: Icons.assignment,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AssignComplaintScreen(),
+                      ),
+                    ),
                   ),
-                );
-              },
-            ),
-            _AdminTile(
-              label: 'Post Announcement',
-              icon: Icons.announcement,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const PostAnnouncementScreen(),
+                  _AdminTile(
+                    label: 'Manage Teams',
+                    icon: Icons.groups_2,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => ManageTeamsScreen()),
+                    ),
                   ),
-                );
-              },
-            ),
-          ],
+                  _AdminTile(
+                    label: 'CR List',
+                    icon: Icons.list,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AdminCRListScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _AdminTile(
+                    label: 'Announcement',
+                    icon: Icons.announcement,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AnnouncementHomeScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

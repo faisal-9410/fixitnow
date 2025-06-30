@@ -3,11 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'MyComplaintsScreen.dart';
 import 'file_complaint_screen.dart';
-import 'feed_screen.dart';
 import 'MyProfileScreen.dart';
 import 'login_screen.dart';
 import 'about_us.dart';
 import 'contact_us.dart';
+import 'announcement_screen.dart'; // Added
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -103,12 +103,12 @@ class DashboardScreen extends StatelessWidget {
               },
             ),
             _DashboardTile(
-              icon: Icons.feed,
-              label: "Feed",
+              icon: Icons.announcement,
+              label: "Announcements",
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const FeedScreen()),
+                  MaterialPageRoute(builder: (_) => const AnnouncementScreen()),
                 );
               },
             ),

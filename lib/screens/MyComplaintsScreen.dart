@@ -7,22 +7,28 @@ class MyComplaintsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final user = FirebaseAuth.instance.currentUser;
 
-    if (uid.isEmpty) {
-      return const Scaffold(body: Center(child: Text("User not logged in")));
+    if (user == null) {
+      return const Scaffold(body: Center(child: Text('User not logged in.')));
     }
 
+    debugPrint("Logged-in UID: ${user.uid}");
+
     final complaintsStream = FirebaseFirestore.instance
-        .collection('complaints')
-        .where('crUid', isEqualTo: uid)
+        .collection('cr_complaints')
+        .where('userId', isEqualTo: user.uid)
+        .orderBy('submitted_at', descending: true)
         .snapshots();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('My Complaints'),
+        title: const Text("My Complaints"),
         backgroundColor: Colors.pink[700],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: complaintsStream,
@@ -31,77 +37,59 @@ class MyComplaintsScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final complaints = snapshot.data?.docs ?? [];
-
-          if (complaints.isEmpty) {
-            return const Center(
-              child: Text(
-                "No complaints filed yet.",
-                style: TextStyle(color: Colors.white70),
-              ),
-            );
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text("No complaints found."));
           }
 
+          final complaints = snapshot.data!.docs;
+
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
             itemCount: complaints.length,
             itemBuilder: (context, index) {
               final doc = complaints[index];
               final data = doc.data() as Map<String, dynamic>;
 
+              final complaintId = data['complaint_id'] ?? 'Unknown';
+              final location = data['room_location'] ?? 'No location';
+              final type = data['problem_type'] ?? 'No type';
+              final status = data['status'] ?? 'Pending';
+              final priority = data['priority'] == true;
+              final submittedAt = (data['submitted_at'] as Timestamp?)
+                  ?.toDate();
+              final completedAt = (data['completed_at'] as Timestamp?)
+                  ?.toDate();
+
               return Card(
-                color: Colors.white,
+                margin: const EdgeInsets.all(12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                elevation: 3,
-                margin: const EdgeInsets.only(bottom: 16),
+                color: Colors.white,
                 child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
+                  leading: const Icon(Icons.report_problem_outlined),
                   title: Text(
-                    data['title'] ?? '',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    "$complaintId - $type",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 6),
-                      Text(
-                        "Location: ${data['room'] ?? 'N/A'}",
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 14,
+                      Text("Location: $location"),
+                      Text("Status: $status"),
+                      if (priority)
+                        const Text(
+                          "⚠️ Priority Complaint",
+                          style: TextStyle(color: Colors.red),
                         ),
-                      ),
-                      Text(
-                        "Date: ${data['date'] ?? 'Unknown'}",
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 14,
+                      if (completedAt != null)
+                        Text(
+                          "✅ Completed on: ${completedAt.toString().split('.').first}",
                         ),
-                      ),
+                      if (submittedAt != null)
+                        Text(
+                          "🕒 Submitted on: ${submittedAt.toString().split('.').first}",
+                        ),
                     ],
-                  ),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(data['status']),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      data['status'] ?? 'Pending',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
                   ),
                 ),
               );
@@ -110,17 +98,5 @@ class MyComplaintsScreen extends StatelessWidget {
         },
       ),
     );
-  }
-
-  Color _getStatusColor(String? status) {
-    switch (status) {
-      case 'Resolved':
-        return Colors.green;
-      case 'In Progress':
-        return Colors.blue;
-      case 'Pending':
-      default:
-        return Colors.orange;
-    }
   }
 }

@@ -2,105 +2,144 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class MyProfileScreen extends StatelessWidget {
+class MyProfileScreen extends StatefulWidget {
   const MyProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+  State<MyProfileScreen> createState() => _MyProfileScreenState();
+}
 
-    if (uid.isEmpty) {
-      return const Scaffold(
-        body: Center(child: Text("User not logged in")),
-      );
+class _MyProfileScreenState extends State<MyProfileScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  String name = '';
+  String email = '';
+  String roll = '';
+  String department = '';
+  String level = '';
+  String section = '';
+  String mobile = '';
+  String userType = '';
+
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('user')
+          .doc(user.uid)
+          .get();
+
+      final data = doc.data();
+      if (data != null) {
+        setState(() {
+          name = data['name'] ?? '';
+          email = user.email ?? '';
+          roll = data['roll'] ?? '';
+          department = data['department'] ?? '';
+          level = data['level'] ?? '';
+          section = data['section'] ?? '';
+          mobile = data['mobile'] ?? '';
+          userType = data['userType'] ?? '';
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
     }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEFEFEF),
       appBar: AppBar(
+        title: const Text('My Profile'),
         backgroundColor: Colors.pink[700],
-        title: const Text("My Profile"),
       ),
-      body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance
-            .collection('cr_registrations') // ✅ Corrected collection
-            .doc(uid)
-            .get(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(child: Text("Profile not found"));
-          }
-
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-
-          return Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
               children: [
-                const CircleAvatar(
-                  radius: 50,
-                  backgroundImage: AssetImage('assets/user.png'),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  data['name'] ?? 'N/A',
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                // 🔷 Gradient Header with Avatar and Name
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF43C6AC), Color(0xFF191654)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(24),
+                      bottomRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      const CircleAvatar(
+                        radius: 50,
+                        backgroundImage: AssetImage('assets/user.png'),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        userType.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Class Representative",
-                  style: TextStyle(color: Colors.black54, fontSize: 16),
-                ),
-                const SizedBox(height: 20),
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 12,
-                    ),
-                    child: Column(
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.email, color: Colors.pink),
-                          title: Text(
-                            data['email'] ?? '',
-                            style: const TextStyle(color: Colors.black87),
-                          ),
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.phone, color: Colors.pink),
-                          title: Text(
-                            data['mobile'] ?? '', // ✅ Corrected key from 'phone' to 'mobile'
-                            style: const TextStyle(color: Colors.black87),
-                          ),
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.school, color: Colors.pink),
-                          title: Text(
-                            "Department: ${data['department'] ?? ''}",
-                            style: const TextStyle(color: Colors.black87),
-                          ),
-                        ),
-                      ],
-                    ),
+
+                const SizedBox(height: 16),
+
+                // 📋 Profile Details Cards
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    children: [
+                      _buildInfoCard(Icons.perm_identity, "MIST Roll", roll),
+                      _buildInfoCard(Icons.apartment, "Department", department),
+                      _buildInfoCard(Icons.grade, "Level", level),
+                      _buildInfoCard(Icons.group, "Section", section),
+                      _buildInfoCard(Icons.phone, "Mobile", mobile),
+                      _buildInfoCard(Icons.email, "Email", email),
+                    ],
                   ),
                 ),
               ],
             ),
-          );
-        },
+    );
+  }
+
+  Widget _buildInfoCard(IconData icon, String title, String value) {
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.pink[700]),
+        title: Text(title),
+        subtitle: Text(value.isNotEmpty ? value : 'N/A'),
       ),
     );
   }

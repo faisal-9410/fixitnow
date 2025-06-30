@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_dashboard_screen.dart';
 import 'team_dashboard_screen.dart';
 import 'dashboard_screen.dart';
+import 'register_screen.dart'; // ✅ Register navigation
+import 'guest_login_screen.dart'; // ✅ Guest login
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -44,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       final doc = await FirebaseFirestore.instance
-          .collection('user') // ✅ Your collection name
+          .collection('user')
           .doc(uid)
           .get();
 
@@ -58,8 +60,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final data = doc.data()!;
       final userType = data['userType'] ?? '';
-
-      // ✅ Added support for both String and Boolean true
       final approvedRaw = data['approved'];
       final approved = approvedRaw == true || approvedRaw == 'true';
 
@@ -154,6 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: Container(
                           alignment: Alignment.center,
+                          height: 48,
                           child: const Text(
                             'Login',
                             style: TextStyle(
@@ -166,22 +167,42 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
               const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+
+              /// ✅ Register + Guest Block as Column
+              Column(
                 children: [
-                  const Text(
-                    "Don't have an account? ",
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      // TODO: Navigate to register screen
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RegisterScreen(),
+                        ),
+                      );
                     },
                     child: const Text(
-                      "Register",
-                      style: TextStyle(
-                        color: Colors.pinkAccent,
-                        fontWeight: FontWeight.bold,
+                      "Don't have an account? Register",
+                      style: TextStyle(color: Colors.pinkAccent),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const GuestLoginScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "Continue as Guest",
+                        style: TextStyle(
+                          color: Colors.pinkAccent,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ),

@@ -1,45 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class AssignComplaintScreen extends StatefulWidget {
+class AssignComplaintScreen extends StatelessWidget {
   const AssignComplaintScreen({super.key});
 
-  @override
-  State<AssignComplaintScreen> createState() => _AssignComplaintScreenState();
-}
+  // Fetch both guest and CR complaints where assignedTeam is still empty
+  Future<List<QueryDocumentSnapshot>> fetchAllUnassignedComplaints() async {
+    final guestSnapshot = await FirebaseFirestore.instance
+        .collection('complaints')
+        .where('assignedTeam', isEqualTo: '')
+        .get();
 
-class _AssignComplaintScreenState extends State<AssignComplaintScreen> {
-  final List<String> teams = [
-    'Electric Team',
-    'Water Team',
-    'Building Team',
-    'Furniture Team',
-    'Projector Team',
-    'Computer Team',
-  ];
+    final crSnapshot = await FirebaseFirestore.instance
+        .collection('cr_complaints')
+        .where('assignedTeam', isEqualTo: '')
+        .get();
 
-  Future<void> assignTeam(String docId, String team, bool isPriority) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('guest_complaints')
-          .doc(docId)
-          .update({
-            'assigned_team': team,
-            'priority': isPriority,
-            'status': 'Assigned',
-            'timestamp_assigned': FieldValue.serverTimestamp(),
-          });
+    return [...guestSnapshot.docs, ...crSnapshot.docs];
+  }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Assigned to $team ${isPriority ? "(PRIORITY)" : ""}'),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to assign complaint')),
-      );
-    }
+  // Assign team to the complaint (can be from either collection)
+  Future<void> assignTeam(DocumentReference docRef, String team) async {
+    await docRef.update({'assignedTeam': team, 'status': 'Assigned'});
   }
 
   @override
@@ -49,75 +31,63 @@ class _AssignComplaintScreenState extends State<AssignComplaintScreen> {
         title: const Text("Assign Complaints"),
         backgroundColor: Colors.pink[700],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('guest_complaints')
-            .where('status', isEqualTo: 'Pending')
-            .orderBy('submitted_at', descending: true)
-            .snapshots(),
+      body: FutureBuilder<List<QueryDocumentSnapshot>>(
+        future: fetchAllUnassignedComplaints(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData)
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-
-          final complaints = snapshot.data!.docs;
-
-          if (complaints.isEmpty) {
-            return const Center(child: Text('No pending complaints.'));
           }
 
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No new complaints."));
+          }
+
+          final complaints = snapshot.data!;
+
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
             itemCount: complaints.length,
             itemBuilder: (context, index) {
               final doc = complaints[index];
               final data = doc.data() as Map<String, dynamic>;
+              final isGuest = data['userType'] == 'guest';
 
-              bool isPriority = data['priority'] ?? false;
+              final issueText = data['issue'] ?? data['title'] ?? 'No title';
+              final location = data['location'] ?? data['room_location'] ?? 'Unknown';
+              final reportedBy = data['userName'] ?? data['guestName'] ?? 'Unknown';
 
               return Card(
-                color: data['user_type'] == 'guest'
-                    ? Colors.orange[100]
-                    : Colors.white,
-                margin: const EdgeInsets.symmetric(vertical: 8),
+                color: isGuest ? Colors.red[100] : Colors.white,
+                margin: const EdgeInsets.all(12),
                 child: ListTile(
-                  title: Text("${data['title']} (${data['room_location']})"),
+                  title: Text(
+                    "Issue: $issueText",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("ID: ${data['complaint_id']}"),
-                      Text("Status: ${data['status']}"),
-                      Row(
-                        children: [
-                          const Text("Mark as Priority"),
-                          StatefulBuilder(
-                            builder: (context, setCheckboxState) => Checkbox(
-                              value: isPriority,
-                              onChanged: (value) {
-                                setCheckboxState(() => isPriority = value!);
-                              },
-                            ),
-                          ),
+                      Text("Location: $location"),
+                      Text("Reported by: $reportedBy"),
+                      const SizedBox(height: 8),
+                      const Text("Assign to team:"),
+                      DropdownButton<String>(
+                        isExpanded: true,
+                        value: null,
+                        hint: const Text("Select a team"),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            assignTeam(doc.reference, newValue);
+                          }
+                        },
+                        items: const [
+                          DropdownMenuItem(value: 'Electric', child: Text('Electric')),
+                          DropdownMenuItem(value: 'Water', child: Text('Water')),
+                          DropdownMenuItem(value: 'Furniture', child: Text('Furniture')),
+                          DropdownMenuItem(value: 'Projector', child: Text('Projector')),
+                          DropdownMenuItem(value: 'Computer', child: Text('Computer')),
                         ],
                       ),
                     ],
-                  ),
-                  trailing: DropdownButton<String>(
-                    hint: const Text("Assign"),
-                    value: null,
-                    onChanged: (team) {
-                      if (team != null) assignTeam(doc.id, team, isPriority);
-                    },
-                    items: teams.map((team) {
-                      return DropdownMenuItem(
-                        value: team,
-                        child: Text(
-                          team,
-                          style: const TextStyle(color: Colors.black),
-                        ),
-                      );
-                    }).toList(),
-                    dropdownColor: Colors.white,
-                    iconEnabledColor: Colors.black,
                   ),
                 ),
               );
